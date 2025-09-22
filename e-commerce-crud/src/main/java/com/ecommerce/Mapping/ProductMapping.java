@@ -2,14 +2,15 @@ package com.ecommerce.Mapping;
 
 import com.ecommerce.DTOs.ProductDTO;
 import com.ecommerce.entities.Product;
+import lombok.Data;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 @Component
 public  class ProductMapping {
 
-    public ProductDTO ProductToDto(Product product){
-        ProductDTO productDTO= new ProductDTO();
+    public ProductDTO ProductToDto(Product product) {
+        ProductDTO productDTO = new ProductDTO();
         productDTO.setId(product.getId());
         productDTO.setName(product.getName());
         productDTO.setPrice(product.getPrice());
@@ -20,9 +21,10 @@ public  class ProductMapping {
         } else {
             productDTO.setCategoryName("Uncategorized"); // or null if you prefer
         }
-        return productDTO;
 
+        return productDTO;
     }
+
 
 
     public Product  DtoToProduct(ProductDTO productDTO){

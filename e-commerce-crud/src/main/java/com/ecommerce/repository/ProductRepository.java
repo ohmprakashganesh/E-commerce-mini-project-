@@ -2,26 +2,31 @@ package com.ecommerce.repository;
 
 import com.ecommerce.DTOs.ProductDTO;
 import com.ecommerce.entities.Product;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product,Long> {
+    Page<Product> findAll(Pageable pageable);
 
     //flter by name
-    List<Product> findByCategory_NameIgnoreCase(String categoryName);
+    Page<Product> findByCategory_NameIgnoreCase(String categoryName,Pageable pageable);
 
     // Filter by price range between max and min
-    List<Product> findByPriceBetween(int minPrice, int maxPrice);
+    Page<Product> findByPriceBetween(int minPrice, int maxPrice,Pageable pageable);
 
     //  filter by category and price
-    List<Product> findByCategory_NameIgnoreCaseAndPriceBetween(String categoryName, int minPrice, int maxPrice);
+    Page<Product> findByCategory_NameIgnoreCaseAndPriceBetween(String categoryName, int minPrice, int maxPrice, Pageable pageable);
 
-    List<Product> findByCategory_NameIgnoreCaseAndPriceLessThanEqual(String category, Integer max);
+    Page<Product> findByCategory_NameIgnoreCaseAndPriceLessThanEqual(String category, Integer max,Pageable pageable);
 
-    List<Product> findByCategory_NameIgnoreCaseAndPriceGreaterThanEqual(String category, Integer max);
+    Page<Product> findByCategory_NameIgnoreCaseAndPriceGreaterThanEqual(String category, Integer max,Pageable pageable);
 
-    List<Product> findByPriceGreaterThanEqual(Integer min);
+    Page<Product> findByPriceGreaterThanEqual(Integer min,Pageable pageable);
 
-    List<Product> findByPriceLessThanEqual(Integer max);
+    Page<Product> findByPriceLessThanEqual(Integer max,Pageable pageable);
+
+    Product findByNameIgnoreCase(String name);
 }

@@ -9,6 +9,10 @@ import com.ecommerce.repository.CategoryRepository;
 import com.ecommerce.repository.ProductRepository;
 import com.ecommerce.service.ProductServices;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -58,6 +62,12 @@ public class ProductServiceImpl implements ProductServices {
     }
 
     @Override
+    public ProductDTO getByName(String name) {
+     Product product =  productRepository.findByNameIgnoreCase(name);
+     return productMapping.ProductToDto(product);
+    }
+
+    @Override
     public ProductDTO updateProduct(Long id, ProductDTO productDTO) {
         try{
             Product product= productRepository.findById(id).orElseThrow(()->new RuntimeException("not found product with id:"+id));
@@ -82,10 +92,13 @@ public class ProductServiceImpl implements ProductServices {
     }
 
     @Override
-    public List<ProductDTO> getAllProducts() {
+    public Page<ProductDTO> getAllProducts(int page, int size) {
         try{
-         List<Product> productList= productRepository.findAll();
-         return  productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
+            Page<Product> productPage;
+            Pageable pageable=PageRequest.of(page,size);
+        productPage = productRepository.findAll(pageable);
+
+         return  productPage.map(productMapping::ProductToDto);
         }catch (Exception ex){
             throw new RuntimeException("unable to fetch "+ ex.getMessage());
         }
@@ -103,38 +116,74 @@ public class ProductServiceImpl implements ProductServices {
 //        return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
 //
 //    }
-
-
-
     @Override
-    public List<ProductDTO> filterByCategoryAndPrice(String category, Integer min, Integer max) {
+    public Page<ProductDTO> filterByCategoryAndPrice(String category, Integer min, Integer max,
+                                                     int page, int size, String sortBy, String sortDir) {
 
+        Pageable pageable = PageRequest.of(page, size,
+                sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending());
 
-        if(category !=null && max!=null && min!=null){
-            List<Product> productList= productRepository.findByCategory_NameIgnoreCaseAndPriceBetween(category,min,max);
-            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
-        }else if( category == null && max !=null && min!=null){
-            List<Product> productList= productRepository.findByPriceBetween(min,max);
-            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
-        }else if(category !=null  && max!=null && min==null){
-            List<Product> productList= productRepository.findByCategory_NameIgnoreCaseAndPriceLessThanEqual(category,max);
-            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
-        }else if(category !=null &&  min!=null && max==null ){
-            List<Product> productList= productRepository.findByCategory_NameIgnoreCaseAndPriceGreaterThanEqual(category,max);
-            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
-        }else if(category ==null && max==null && min!=null){
-            List<Product> productList= productRepository.findByPriceGreaterThanEqual(min);
-            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
-        }else if(category ==null && min==null && max!=null){
-            List<Product> productList= productRepository.findByPriceLessThanEqual(max);
-            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
-        } else if (category !=null && min==null && max==null) {
-            List<Product> productList= productRepository.findByCategory_NameIgnoreCase(category);
-            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
+        Page<Product> productPage;
 
-        }else{
-            List<Product> productList= productRepository.findAll();
-            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
+        if(category != null && max != null && min != null){
+            productPage = productRepository.findByCategory_NameIgnoreCaseAndPriceBetween(category, min, max, pageable);
+        } else if(category == null && max != null && min != null){
+            productPage = productRepository.findByPriceBetween(min, max, pageable);
+        } else if(category != null && max != null && min == null){
+            productPage = productRepository.findByCategory_NameIgnoreCaseAndPriceLessThanEqual(category, max, pageable);
+        } else if(category != null && min != null && max == null){
+            productPage = productRepository.findByCategory_NameIgnoreCaseAndPriceGreaterThanEqual(category, min, pageable);
+        } else if(category == null && max == null && min != null){
+            productPage = productRepository.findByPriceGreaterThanEqual(min, pageable);
+        } else if(category == null && min == null && max != null){
+            productPage = productRepository.findByPriceLessThanEqual(max, pageable);
+        } else if(category != null && min == null && max == null){
+            productPage = productRepository.findByCategory_NameIgnoreCase(category, pageable);
+        } else {
+            productPage = productRepository.findAll(pageable);
         }
+
+        // mapping the page <Product> into page<ProductDTO>
+        return productPage.map(productMapping::ProductToDto);
     }
+
+//    public Page<ProductDTO> filterByCategoryAndPrice(String category, Integer min, Integer max, int page, int size, String sortBy, String  sortDir) {
+//        Pageable pageable= PageRequest.of(
+//                page,
+//                size,
+//                sortDir.equalsIgnoreCase("asc")
+//                        ? Sort.by(sortBy).ascending()
+//                        :Sort.by(sortBy).descending()
+//                );
+//           Page<Product> productPage;
+//
+//        if(category !=null && max!=null && min!=null){
+//            productPage= productRepository.findByCategory_NameIgnoreCaseAndPriceBetween(category,min,max,pageable);
+////            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
+//        }else if( category == null && max !=null && min!=null){
+//            List<Product> productList= productRepository.findByPriceBetween(min,max);
+//            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
+//        }else if(category !=null  && max!=null && min==null){
+//            List<Product> productList= productRepository.findByCategory_NameIgnoreCaseAndPriceLessThanEqual(category,max);
+//            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
+//        }else if(category !=null &&  min!=null && max==null ){
+//            List<Product> productList= productRepository.findByCategory_NameIgnoreCaseAndPriceGreaterThanEqual(category,max);
+//            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
+//        }else if(category ==null && max==null && min!=null){
+//            List<Product> productList= productRepository.findByPriceGreaterThanEqual(min);
+//            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
+//        }else if(category ==null && min==null && max!=null){
+//            List<Product> productList= productRepository.findByPriceLessThanEqual(max);
+//            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
+//        } else if (category !=null && min==null && max==null) {
+//            List<Product> productList= productRepository.findByCategory_NameIgnoreCase(category);
+//            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
+//
+//        }else{
+//            List<Product> productList= productRepository.findAll();
+//            return productList.stream().map(productMapping::ProductToDto).collect(Collectors.toList());
+//        }
+//        return productPage.map(productMapping::ProductToDto);
+//
+//    }
 }

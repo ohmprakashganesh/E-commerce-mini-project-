@@ -16,6 +16,8 @@ public interface ProductServices {
      //fetch single product
      ProductDTO getProductById(Long id);
 
+     ProductDTO getByName(String name);
+
      //update the product
      ProductDTO updateProduct(Long id, ProductDTO product);
 
@@ -23,11 +25,13 @@ public interface ProductServices {
      void deleteProduct(Long id);
 
      //fetch all Products
-     List<ProductDTO> getAllProducts();
+     Page<ProductDTO> getAllProducts(int page, int size);
 
 
 
  Page<ProductDTO> filterByCategoryAndPrice(String category, Integer min, Integer max, int page, int size, String sortBy, String sortDir);
+
+
 
  // List<ProductDTO> filterByCategory(String category);
 //

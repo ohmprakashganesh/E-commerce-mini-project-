@@ -1,9 +1,11 @@
 package com.ecommerce.controller;
 
+import com.ecommerce.DTOs.PageResponse;
 import com.ecommerce.DTOs.ProductDTO;
 import com.ecommerce.entities.Product;
 import com.ecommerce.service.ProductServices;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,10 +29,9 @@ public class ProductController {
     public ResponseEntity<ProductDTO> getProductById(@PathVariable Long id){
         return  new ResponseEntity<>(productServices.getProductById(id), HttpStatus.OK);
     }
-
-    @GetMapping("/fetchAll")
-    public ResponseEntity<List<ProductDTO>> getAllProducts(){
-        return  new ResponseEntity<>(productServices.getAllProducts(),HttpStatus.OK);
+    @GetMapping("/fetchByName/{name}")
+    public ResponseEntity<ProductDTO> getProductById(@PathVariable String name){
+        return  new ResponseEntity<>(productServices.getByName(name), HttpStatus.OK);
     }
     @PutMapping("/update/{id}")
     public  ResponseEntity<ProductDTO> updateProduct(@PathVariable Long id,@RequestBody ProductDTO productDTO){
@@ -41,31 +42,52 @@ public class ProductController {
         productServices.deleteProduct(id);
         return  new ResponseEntity<>("deleted successfully",HttpStatus.OK);
     }
+    @GetMapping("/fetchAll")
+    public ResponseEntity<PageResponse<ProductDTO>> getAllProducts( @RequestParam(defaultValue = "0") int page,
+                                                                    @RequestParam(defaultValue = "10") int size){
+        Page<ProductDTO> productPage  =  productServices.getAllProducts(page,size);
+        PageResponse response= new PageResponse(
+                productPage.getContent(),
+                productPage.getNumber(),
+                productPage.getSize(),
+                productPage.getTotalElements(),
+                productPage.getTotalPages(),
+                productPage.isLast()
 
-    // filter APIs
-//    @GetMapping("/filter/category")
-//    public List<ProductDTO> filterByCategory(@RequestParam String category) {
-//        return productServices.filterByCategory(category);
-//    }
-//
-//    // Filter by price range
-//    @GetMapping("/filter/price")
-//    public List<ProductDTO> filterByPrice(@RequestParam int min, @RequestParam int max) {
-//        return productServices.filterByPriceRange(min, max);
-//    }
+        );
+        if(productPage.isEmpty()){
+        return     ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
+        }else{
+            return  ResponseEntity.ok(response);
+        }
 
-    // Filter by category & price
-    @GetMapping("/filter/category-price")
-    public List<ProductDTO> filterByCategoryAndPrice(@RequestParam(required = false) String category,
-                                                  @RequestParam(required = false) Integer min,
-                                                  @RequestParam (required = false)Integer max,
-                                                     @RequestParam(defaultValue = "0") int page,
-                                                     @RequestParam(defaultValue = "20") int size,
-                                                     @RequestParam(defaultValue = "name") String sortBy,
-                                                     @RequestParam(defaultValue = "asc") String sortDir
-    ) {
-        return productServices.filterByCategoryAndPrice(category, min, max,page,size,sortBy,sortDir);
+
     }
+    @GetMapping("/filter/category-price")
+    public ResponseEntity< PageResponse<ProductDTO>> filterByCategoryAndPrice(@RequestParam(required = false) String category,
+                                                             @RequestParam(required = false) Integer min,
+                                                             @RequestParam(required = false) Integer max,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "10") int size,
+                                                             @RequestParam(defaultValue = "name") String sortBy,
+                                                             @RequestParam(defaultValue = "asc") String sortDir) {
+       Page<ProductDTO> productPage= productServices.filterByCategoryAndPrice(category, min, max, page, size, sortBy, sortDir);
+             //return by mapping to pageDto class
+        PageResponse<ProductDTO> response= new PageResponse<>(
+               productPage.getContent(),
+                productPage.getNumber(),
+                productPage.getSize(),
+                productPage.getTotalElements(),
+                productPage.getTotalPages(),
+                productPage.isLast()
+        );
+           if(productPage.isEmpty()){
+               return  ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
+           }else{
+               return  ResponseEntity.ok(response);
+           }
+    }
+
 
 
 
